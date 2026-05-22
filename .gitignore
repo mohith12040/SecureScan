@@ -129,3 +129,9 @@ Thumbs.db
 # Project database
 securescan.db
 securescan.db-journal
+
+# Presentation and HTML artifacts
+SecureScan_Presentation.pptx
+presentation.html
+generate_ppt.py
+
