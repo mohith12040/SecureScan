@@ -87,7 +87,7 @@ SecureScan/
 
 ### Step 1: Clone & Initialize Directory
 ```bash
-git clone https://github.com/your-username/SecureScan.git
+git clone https://github.com/mohith12040/SecureScan.git
 cd SecureScan
 ```
 
