@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Auditor Clearance Request | SecureScan{% endblock %}
+
+{% block content %}
+<div class="auth-bg">
+    <div class="cyber-card auth-card neon-glow-purple">
+        
+        <div class="auth-header">
+            <i class="fa-solid fa-id-card-clip"></i>
+            <h2>Clearance Request</h2>
+            <p class="text-secondary">Register your security terminal credentials</p>
+        </div>
+        
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                <label for="{{ form.username.id }}" class="form-label text-secondary small">{{ form.username.label }}</label>
+                {{ form.username(class="form-control cyber-input" + (" is-invalid" if form.username.errors else ""), placeholder="e.g. Operator_X") }}
+                {% for error in form.username.errors %}
+                    <div class="invalid-feedback text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.email.id }}" class="form-label text-secondary small">{{ form.email.label }}</label>
+                {{ form.email(class="form-control cyber-input" + (" is-invalid" if form.email.errors else ""), placeholder="e.g. agent@company.local") }}
+                {% for error in form.email.errors %}
+                    <div class="invalid-feedback text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.password.id }}" class="form-label text-secondary small">{{ form.password.label }}</label>
+                {{ form.password(class="form-control cyber-input" + (" is-invalid" if form.password.errors else ""), placeholder="••••••••") }}
+                {% for error in form.password.errors %}
+                    <div class="invalid-feedback text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-4">
+                <label for="{{ form.confirm_password.id }}" class="form-label text-secondary small">{{ form.confirm_password.label }}</label>
+                {{ form.confirm_password(class="form-control cyber-input" + (" is-invalid" if form.confirm_password.errors else ""), placeholder="••••••••") }}
+                {% for error in form.confirm_password.errors %}
+                    <div class="invalid-feedback text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <button type="submit" class="cyber-btn cyber-btn-purple w-100 justify-content-center">
+                <i class="fa-solid fa-address-card"></i> Register Auditor Account
+            </button>
+            
+        </form>
+        
+        <div class="text-center mt-4">
+            <p class="text-secondary small mb-0">
+                Already cleared? <a href="{{ url_for('auth.login') }}" class="text-cyan font-weight-bold" style="text-decoration: none;">Secure Login Portal</a>
+            </p>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

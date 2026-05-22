@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Authentication Portal | SecureScan{% endblock %}
+
+{% block content %}
+<div class="auth-bg">
+    <div class="cyber-card auth-card neon-glow-cyan">
+        
+        <div class="auth-header">
+            <i class="fa-solid fa-user-shield"></i>
+            <h2>Auditor Login</h2>
+            <p class="text-secondary">Input credentials to unlock the vulnerability console</p>
+        </div>
+        
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                <label for="{{ form.email.id }}" class="form-label text-secondary small">{{ form.email.label }}</label>
+                {{ form.email(class="form-control cyber-input" + (" is-invalid" if form.email.errors else ""), placeholder="Enter security credentials") }}
+                {% for error in form.email.errors %}
+                    <div class="invalid-feedback text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-4">
+                <label for="{{ form.password.id }}" class="form-label text-secondary small">{{ form.password.label }}</label>
+                {{ form.password(class="form-control cyber-input" + (" is-invalid" if form.password.errors else ""), placeholder="••••••••") }}
+                {% for error in form.password.errors %}
+                    <div class="invalid-feedback text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-4 form-check d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    {{ form.remember(class="form-check-input cyber-input", style="width: 16px; height: 16px; margin: 0; padding: 0;") }}
+                    <label class="form-check-label text-secondary small" for="{{ form.remember.id }}">{{ form.remember.label }}</label>
+                </div>
+            </div>
+            
+            <button type="submit" class="cyber-btn cyber-btn-cyan w-100 justify-content-center">
+                <i class="fa-solid fa-unlock-keyhole"></i> Secure Sign In
+            </button>
+            
+        </form>
+        
+        <div class="text-center mt-4">
+            <p class="text-secondary small mb-0">
+                New auditor? <a href="{{ url_for('auth.register') }}" class="text-cyan font-weight-bold" style="text-decoration: none;">Request Account Clearance</a>
+            </p>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

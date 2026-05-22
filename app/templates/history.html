@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Scan History Archives | SecureScan Operations{% endblock %}
+
+{% block content %}
+<!-- TOPBAR HEADER -->
+<div class="topbar">
+    <div class="topbar-title">
+        <h1>Vulnerability Archives</h1>
+        <p>Search, filter, and review historical threat scans and auditing metrics</p>
+    </div>
+</div>
+
+<!-- SEARCH & FILTER PANELS -->
+<div class="cyber-card p-4 mb-4">
+    <form method="GET" action="{{ url_for('main.history') }}" class="row g-3">
+        <!-- Search bar -->
+        <div class="col-lg-4 col-md-6">
+            <label class="form-label text-secondary small">Target Host IP / Domain</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border text-secondary"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" name="search" class="form-control cyber-input" placeholder="Search targets..." value="{{ search }}">
+            </div>
+        </div>
+        
+        <!-- Severity filter -->
+        <div class="col-lg-3 col-md-3">
+            <label class="form-label text-secondary small">Threat Severity</label>
+            <select name="severity" class="form-select cyber-input">
+                <option value="">-- All Severities --</option>
+                <option value="Low" {% if severity == 'Low' %}selected{% endif %}>Low</option>
+                <option value="Medium" {% if severity == 'Medium' %}selected{% endif %}>Medium</option>
+                <option value="High" {% if severity == 'High' %}selected{% endif %}>High</option>
+                <option value="Critical" {% if severity == 'Critical' %}selected{% endif %}>Critical</option>
+            </select>
+        </div>
+        
+        <!-- Sorting dropdown -->
+        <div class="col-lg-3 col-md-3">
+            <label class="form-label text-secondary small">Sort Sequence</label>
+            <select name="sort" class="form-select cyber-input">
+                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest Scans First</option>
+                <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest Scans First</option>
+                <option value="risk_desc" {% if sort == 'risk_desc' %}selected{% endif %}>Threat Score (High-Low)</option>
+                <option value="risk_asc" {% if sort == 'risk_asc' %}selected{% endif %}>Threat Score (Low-High)</option>
+            </select>
+        </div>
+        
+        <!-- Filter Button -->
+        <div class="col-lg-2 col-md-12 d-flex align-items-end">
+            <button type="submit" class="cyber-btn cyber-btn-cyan w-100 justify-content-center">
+                <i class="fa-solid fa-filter"></i> Apply Filters
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- SCANS DATA ARCHIVE -->
+<div class="cyber-card p-4">
+    {% if not scans %}
+    <div class="text-center py-5 text-muted">
+        <i class="fa-solid fa-box-archive display-5 mb-3" style="color: var(--text-secondary);"></i>
+        <h5>No historical matching scans found</h5>
+        <p class="small text-secondary mb-0">Try adjusting your filters or target keywords to resolve past scan records.</p>
+    </div>
+    {% else %}
+    <div class="table-responsive">
+        <table class="cyber-table">
+            <thead>
+                <tr>
+                    <th>Target</th>
+                    <th>Audit Date</th>
+                    <th>Port Checks</th>
+                    <th>Risk Rating</th>
+                    <th>AI Severity</th>
+                    <th class="text-end">Operations Room Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in scans %}
+                <tr>
+                    <td class="font-weight-bold text-white">
+                        <div>{{ s.target }}</div>
+                        <div class="text-secondary small">{{ s.scan_type }}</div>
+                    </td>
+                    <td class="text-secondary small">
+                        {{ (s.created_at | to_ist).strftime('%Y-%m-%d %H:%M:%S IST') }}
+                    </td>
+                    <td>
+                        <span class="badge bg-light border p-2 text-primary font-weight-bold">
+                            {{ s.open_ports_count }} open
+                        </span>
+                    </td>
+                    <td class="font-weight-bold {% if s.risk_score >= 70.0 %}text-danger{% elif s.risk_score >= 45.0 %}text-warning{% else %}text-white{% endif %}">
+                        {{ s.risk_score }} / 100
+                    </td>
+                    <td>
+                        <span class="severity-badge {{ s.predicted_severity.lower() }}">
+                            {{ s.predicted_severity }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-2">
+                            <a href="{{ url_for('main.scan_detail', scan_id=s.id) }}" class="cyber-btn cyber-btn-secondary p-2" title="Inspect Findings">
+                                <i class="fa-solid fa-magnifying-glass-chart"></i> Inspect
+                            </a>
+                            <a href="{{ url_for('api.get_pdf_report', scan_id=s.id) }}" class="cyber-btn cyber-btn-cyan p-2" title="Download Report">
+                                <i class="fa-solid fa-file-pdf"></i> Report
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Cyber themed PAGINATIONS -->
+    {% if pagination.pages > 1 %}
+    <nav class="d-flex justify-content-center mt-4">
+        <ul class="pagination gap-1">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link cyber-input bg-light border text-secondary small py-2 px-3" href="{{ url_for('main.history', page=pagination.prev_num, search=search, severity=severity, sort=sort) }}">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            </li>
+            
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link cyber-input {% if page_num == pagination.page %}bg-primary text-white font-weight-bold border-primary{% else %}bg-light border text-secondary{% endif %} small py-2 px-3" href="{{ url_for('main.history', page=page_num, search=search, severity=severity, sort=sort) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link bg-transparent border-0 text-secondary">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link cyber-input bg-light border text-secondary small py-2 px-3" href="{{ url_for('main.history', page=pagination.next_num, search=search, severity=severity, sort=sort) }}">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% endif %}
+</div>
+{% endblock %}

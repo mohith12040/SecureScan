@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | SecureScan Operations Center{% endblock %}
+
+{% block content %}
+<!-- TOPBAR HEADER -->
+<div class="topbar">
+    <div class="topbar-title">
+        <h1>Operations Room</h1>
+        <p>Real-time network security scanning and AI severity predictions engine</p>
+    </div>
+    <div>
+        <button class="cyber-btn cyber-btn-cyan" data-bs-toggle="modal" data-bs-target="#scanLauncherModal">
+            <i class="fa-solid fa-radar fa-spin-pulse"></i> Launch Target Audit
+        </button>
+    </div>
+</div>
+
+<!-- FOUR METRICS COUNTERS -->
+<div class="row g-4 mb-4">
+    <!-- Total Scans -->
+    <div class="col-xl-3 col-md-6">
+        <div class="cyber-card metric-card">
+            <div class="metric-card-info">
+                <h3>Total Audits</h3>
+                <p>{{ total_scans }}</p>
+            </div>
+            <div class="metric-card-icon" style="color: var(--neon-cyan);">
+                <i class="fa-solid fa-satellite-dish"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Discovered Vulnerabilities -->
+    <div class="col-xl-3 col-md-6">
+        <div class="cyber-card metric-card">
+            <div class="metric-card-info">
+                <h3>Vulnerabilities</h3>
+                <p>{{ total_vulnerabilities }}</p>
+            </div>
+            <div class="metric-card-icon" style="color: var(--color-medium);">
+                <i class="fa-solid fa-bug"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- High Risk Targets -->
+    <div class="col-xl-3 col-md-6">
+        <div class="cyber-card metric-card">
+            <div class="metric-card-info">
+                <h3>High-Risk Targets</h3>
+                <p>{{ high_risk_targets }}</p>
+            </div>
+            <div class="metric-card-icon" style="color: var(--color-critical);">
+                <i class="fa-solid fa-circle-radiation"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Clearance Status -->
+    <div class="col-xl-3 col-md-6">
+        <div class="cyber-card metric-card">
+            <div class="metric-card-info">
+                <h3>Active Clearance</h3>
+                <p style="font-size: 18px; color: var(--color-low); padding-top: 10px;">L3 AUDITOR</p>
+            </div>
+            <div class="metric-card-icon" style="color: var(--color-low);">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CENTRAL WORKSPACE -->
+<div class="row g-4">
+    <!-- LEFT COLUMN: RECENT SCANS LIST -->
+    <div class="col-xl-8">
+        <div class="cyber-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="m-0 font-weight-bold" style="font-size: 18px;">
+                    <i class="fa-solid fa-clock-rotate-left me-2 text-cyan"></i> Recent Scanning Audits
+                </h3>
+                <a href="{{ url_for('main.history') }}" class="text-cyan small font-weight-bold text-decoration-none">
+                    View Archive <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
+                </a>
+            </div>
+            
+            {% if not recent_scans %}
+            <div class="text-center py-5 text-muted d-flex flex-column align-items-center gap-3">
+                <i class="fa-solid fa-microscope" style="font-size: 40px; color: var(--text-secondary);"></i>
+                <div>
+                    <h5 class="font-weight-bold mb-1 text-white">No active vulnerability records found</h5>
+                    <p class="small text-secondary mb-3">Initiate your first automated network threat scan to build telemetry.</p>
+                    <button class="cyber-btn cyber-btn-cyan" data-bs-toggle="modal" data-bs-target="#scanLauncherModal">
+                        <i class="fa-solid fa-circle-play"></i> Initialize First Scan
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="table-responsive">
+                <table class="cyber-table">
+                    <thead>
+                        <tr>
+                            <th>Target Endpoint</th>
+                            <th>Execution Date</th>
+                            <th>Ports</th>
+                            <th>Threat Score</th>
+                            <th>AI Severity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in recent_scans %}
+                        <tr>
+                            <td>
+                                <div class="font-weight-bold text-white">{{ s.target }}</div>
+                                <div class="text-secondary small">{{ s.scan_type }}</div>
+                            </td>
+                            <td class="text-secondary small">
+                                {{ (s.created_at | to_ist).strftime('%Y-%m-%d %H:%M IST') }}
+                            </td>
+                            <td>
+                                <span class="badge bg-light border p-2 text-primary font-weight-bold">
+                                    {{ s.open_ports_count }} open
+                                </span>
+                            </td>
+                            <td>
+                                <div class="font-weight-bold {% if s.risk_score >= 70.0 %}text-danger{% elif s.risk_score >= 45.0 %}text-warning{% else %}text-white{% endif %}">
+                                    {{ s.risk_score }} / 100
+                                </div>
+                            </td>
+                            <td>
+                                <span class="severity-badge {{ s.predicted_severity.lower() }}">
+                                    {{ s.predicted_severity }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('main.scan_detail', scan_id=s.id) }}" class="cyber-btn cyber-btn-secondary p-2" title="Inspect Findings">
+                                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- RIGHT COLUMN: SEVERITY DISTRIBUTION & QUICK AUDITS -->
+    <div class="col-xl-4 d-flex flex-column gap-4">
+        
+        <!-- Doughnut Severity Distribution -->
+        <div class="cyber-card p-4">
+            <h3 class="mb-4 font-weight-bold" style="font-size: 16px;">
+                <i class="fa-solid fa-chart-pie me-2 text-purple"></i> Vulnerability Spectrum
+            </h3>
+            <div style="height: 200px; position: relative;">
+                <canvas id="severityDoughnutChart" data-counts='{{ severity_counts | tojson }}'></canvas>
+            </div>
+        </div>
+        
+        <!-- Trends Line Graph -->
+        <div class="cyber-card p-4 flex-grow-1">
+            <h3 class="mb-4 font-weight-bold" style="font-size: 16px;">
+                <i class="fa-solid fa-chart-line me-2 text-cyan"></i> Threat Risk Trends
+            </h3>
+            <div style="height: 180px;">
+                <canvas id="scanTrendsLineChart"></canvas>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

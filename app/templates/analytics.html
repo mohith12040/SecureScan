@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Vulnerability Analytics Matrix | SecureScan{% endblock %}
+
+{% block content %}
+<!-- TOPBAR HEADER -->
+<div class="topbar">
+    <div class="topbar-title">
+        <h1>Risk Analytics Center</h1>
+        <p>Analyze historical threat trajectories, service exposures, and overall posture profiles</p>
+    </div>
+</div>
+
+{% if not has_data %}
+<!-- EMPTY TELEMETRY CARD -->
+<div class="cyber-card p-5 text-center d-flex flex-column align-items-center gap-3">
+    <i class="fa-solid fa-chart-line display-4 text-secondary"></i>
+    <div>
+        <h5 class="font-weight-bold text-white mb-1">Insufficient database telemetry</h5>
+        <p class="small text-secondary mb-3">Execute at least one completed scan to generate graphical charts and timeline trends.</p>
+        <button class="cyber-btn cyber-btn-cyan" data-bs-toggle="modal" data-bs-target="#scanLauncherModal">
+            <i class="fa-solid fa-satellite-dish me-2"></i> Launch First Audit
+        </button>
+    </div>
+</div>
+{% else %}
+<!-- ANALYTICS CARDS GRID -->
+<div class="row g-4 mb-4">
+    <!-- Historical Risk Score Timeline -->
+    <div class="col-12">
+        <div class="cyber-card p-4">
+            <h3 class="mb-4 font-weight-bold" style="font-size: 18px;">
+                <i class="fa-solid fa-clock-pulse me-2 text-cyan"></i> Historical Risk Threat Score Progress
+            </h3>
+            <div style="height: 300px;">
+                <canvas id="analyticsRiskChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Top Exposed Services Bar Chart -->
+    <div class="col-lg-6">
+        <div class="cyber-card p-4 h-100">
+            <h3 class="mb-4 font-weight-bold" style="font-size: 16px;">
+                <i class="fa-solid fa-network-wired me-2 text-purple"></i> Top 5 exposed network services
+            </h3>
+            <div style="height: 250px;">
+                <canvas id="analyticsServicesChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Proportional Vulnerability Density Doughnut -->
+    <div class="col-lg-6">
+        <div class="cyber-card p-4 h-100">
+            <h3 class="mb-4 font-weight-bold" style="font-size: 16px;">
+                <i class="fa-solid fa-shield-virus me-2 text-pink"></i> Overall Proportional Severity Spectrum
+            </h3>
+            <div style="height: 250px; position: relative;">
+                <canvas id="analyticsVulnerabilitiesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if has_data %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Extract JSON datasets directly from backend contexts safely
+    const dates = {{ scan_dates | tojson }};
+    const riskTrends = {{ risk_trends | tojson }};
+    const portsTrends = {{ ports_trends | tojson }};
+    const severityCounts = {{ severity_counts | tojson }};
+    const servicesLabels = {{ top_services_labels | tojson }};
+    const servicesValues = {{ top_services_values | tojson }};
+
+    // 1. Line Chart: Historical Risk Threat Score Progress
+    const riskCanvas = document.getElementById('analyticsRiskChart');
+    if (riskCanvas) {
+        new Chart(riskCanvas, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'Threat Risk Rating',
+                        data: riskTrends,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.05)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#2563eb',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Open Ports Count',
+                        data: portsTrends,
+                        borderColor: '#7c3aed',
+                        backgroundColor: 'rgba(124, 58, 237, 0.04)',
+                        fill: false,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#7c3aed',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#475569',
+                            font: { family: 'Outfit', size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(15, 23, 42, 0.05)' },
+                        ticks: { color: '#475569', font: { family: 'Inter', size: 10 } }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        grid: { color: 'rgba(15, 23, 42, 0.05)' },
+                        ticks: { color: '#475569', font: { family: 'Inter', size: 10 } },
+                        min: 0,
+                        max: 100
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { color: '#475569', font: { family: 'Inter', size: 10 } },
+                        min: 0
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Bar Chart: Top Exposed Services
+    const servicesCanvas = document.getElementById('analyticsServicesChart');
+    if (servicesCanvas) {
+        new Chart(servicesCanvas, {
+            type: 'bar',
+            data: {
+                labels: servicesLabels,
+                datasets: [{
+                    label: 'Service Exposures Count',
+                    data: servicesValues,
+                    backgroundColor: 'rgba(124, 58, 237, 0.65)',
+                    borderColor: '#7c3aed',
+                    borderWidth: 1.5,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(15, 23, 42, 0.05)' },
+                        ticks: { color: '#475569', font: { family: 'Inter', size: 11 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(15, 23, 42, 0.05)' },
+                        ticks: { color: '#475569', font: { family: 'Inter', size: 10 } },
+                        beginAtZero: true,
+                        stepSize: 1
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. Doughnut Chart: Overall Severity Spectrum
+    const vulnsCanvas = document.getElementById('analyticsVulnerabilitiesChart');
+    if (vulnsCanvas) {
+        new Chart(vulnsCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Low', 'Medium', 'High', 'Critical'],
+                datasets: [{
+                    data: [
+                        severityCounts.Low || 0,
+                        severityCounts.Medium || 0,
+                        severityCounts.High || 0,
+                        severityCounts.Critical || 0
+                    ],
+                    backgroundColor: ['#10b981', '#f59e0b', '#f97316', '#ef4444'],
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#475569',
+                            font: { family: 'Outfit', size: 12 },
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

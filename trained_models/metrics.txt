@@ -1,0 +1,23 @@
+SECURESCAN MODEL TRAINING METRICS
+=================================
+
+Overall Accuracy: 98.20000%
+
+Confusion Matrix:
+[[ 52   0   2   1]
+ [  0 158   1   1]
+ [  0   1 166   0]
+ [  1   1   1 115]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+         Low       0.98      0.95      0.96        55
+      Medium       0.99      0.99      0.99       160
+        High       0.98      0.99      0.99       167
+    Critical       0.98      0.97      0.98       118
+
+    accuracy                           0.98       500
+   macro avg       0.98      0.98      0.98       500
+weighted avg       0.98      0.98      0.98       500
+
